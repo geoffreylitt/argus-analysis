@@ -78,7 +78,8 @@ def aggregate_hours(checkins)
     end
   end
 
-  CSV.open("entries.csv", "w") do |csv|
+  CSV.open("hours.csv", "w") do |csv|
+    csv << ["Date", "Hour", "Steps"]
     entries.each do |entry|
       csv << [entry.date, entry.hour, entry.steps]
     end
@@ -87,7 +88,23 @@ def aggregate_hours(checkins)
   entries
 end
 
+def aggregate_days(checkins)
+  entries = []
+  CSV.open("days.csv", "w") do |csv|
+    csv << ["Date", "Steps", "Distance"]
+    checkins.each do |checkin|
+      date = az_time(checkin.timestamp).to_date
+      steps = checkin.steps.to_i
+      dist = (checkin.distance / 1609).round(2) #convert meters to miles
+      csv << [date, steps, dist]
+    end
+  end
+
+  entries
+end
+
 checkins = download_checkins
 inspect(checkins)
-entries = aggregate_hours(checkins)
+aggregate_hours(checkins)
+aggregate_days(checkins)
 

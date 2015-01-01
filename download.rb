@@ -6,8 +6,9 @@ def az_time(timestamp)
   Time.at(timestamp/1000).to_datetime
 end
 
+# Download checkins from API and save to a JSON file
+# (Requires username/pass being set in environment variables)
 def download_checkins
-  # initial setup. user/pass come from env vars
   require 'mechanize'
   agent = Mechanize.new
   page = agent.get("http://www.azumio.com/login")
@@ -39,6 +40,7 @@ def download_checkins
   return load_checkins
 end
 
+# Load checkins into memory from a JSON file
 def load_checkins
   checkins = JSON.parse(File.read("checkins.json"))
 
@@ -48,6 +50,7 @@ def load_checkins
   checkins
 end
 
+# Quickly examine daily step counts graphically
 def inspect(checkins)
   checkins.each do |c|
     print az_time(c.timestamp).strftime('%D')
@@ -58,6 +61,7 @@ def inspect(checkins)
   end;0
 end
 
+# Write a CSV of step counts aggregated by hour
 def aggregate_hours(checkins)
   entries = []
 
@@ -88,6 +92,7 @@ def aggregate_hours(checkins)
   entries
 end
 
+# Write a CSV of step counts aggregated by date
 def aggregate_days(checkins)
   entries = []
   CSV.open("days.csv", "w") do |csv|

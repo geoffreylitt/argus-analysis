@@ -1,3 +1,7 @@
+library(ggplot2)
+library(scales)
+library(ggthemes)
+
 # Initial setup
 
 data <- read.csv("days.csv", header = TRUE)
@@ -10,9 +14,10 @@ data$Month <- as.numeric(format(data$Date, "%m"))
 # Histogram of steps distribution
 g1 <- ggplot(data, aes(x=Steps))
 g1 <- g1 + geom_histogram(fill = "#555555", color="#eeeeee", breaks=seq(0, 25000, by=2000))
-g1 <- g1 + geom_histogram(data=subset(data, Steps > 10000), fill = "#0f4d92", color="#eeeeee", breaks=seq(0, 25000, by=2000))
+g1 <- g1 + geom_histogram(data=subset(data, Steps > 10000), fill = "#60C629", color="#eeeeee", breaks=seq(0, 25000, by=2000))
 g1 <- g1 + theme_fivethirtyeight(base_size=15)
 g1 <- g1 + ggtitle("Distribution of daily steps")
+g1 <- g1 + annotate("text", x=18000, y=30, label="26% of days had over 10,000 steps")
 g1
 
 # Steps throughout the year by month
@@ -20,7 +25,7 @@ monthly <- aggregate(Steps ~ Month, data, mean)
 g2 <- ggplot(data=monthly, aes(x=Month, y=Steps)) + geom_line()
 g2 <- g2 + scale_x_discrete(labels=c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"))
 g2 <- g2 + scale_y_continuous(limits=c(0,13000))
-g2 <- g2 + geom_rect(alpha=0.01, aes(xmin=4.5, xmax=6.5, ymin=0, ymax=13000))
+g2 <- g2 + geom_rect(alpha=0.01, aes(xmin=4.8, xmax=6.2, ymin=0, ymax=13000))
 g2 <- g2 + theme_fivethirtyeight(base_size=15)
 g2 <- g2 + ggtitle("Average daily steps by month")
 g2 <- g2 + annotate("text", x=2.5, y=3000, label = "School")
@@ -59,13 +64,11 @@ school_weekend <- subset(school, Weekend)
 work_weekend <- subset(work, Weekend)
 t.test(school_weekend$Steps, work_weekend$Steps)
 
-# Basic summary of results thus far:
-g3 <- ggplot(data=school_week, aes(x=Steps, y=Steps)) + geom_boxplot()
-g3
-boxplot(school_week$Steps, school_weekend$Steps, work_week$Steps, work_weekend$Steps, notch=TRUE)
-
-boxplot(Steps ~ Day, data=school)
-boxplot(Steps ~ Day, data=work)
+# Boxplot showing weekdays/weekends for school and work
+mar.default <- c(5, 4, 4, 2) + 0.1
+par(mar=mar.default + c(-2, 4, -2, 0))
+par(bg=rgb(240, 240, 240, max=255))
+boxplot(work_weekend$Steps, work_week$Steps, school_weekend$Steps, school_week$Steps, las=1, family="Helvetica", outline=FALSE, notch=TRUE, horizontal=TRUE, names=c("Work weekends", "Work weekdays", "School weekends", "School weekdays"), main="Weekdays vs. Weekends")
 
 # Next up: some hour-based analysis...
 
@@ -84,11 +87,6 @@ school_hourly <- subset(hourly, Date < graduation)
 vacation_hourly <- subset(hourly, Date > graduation & Date < workstart)
 work_hourly <- subset(hourly, Date > workstart)
 
-# different daily rhythms
-plot(aggregate(Steps ~ Hour, work_hourly, mean), type="o", col="blue")
-par(new=TRUE)
-plot(aggregate(Steps ~ Hour, school_hourly, mean), type="o", col="red")
-
 school_week_hourly <- subset(school_hourly, Weekend == FALSE)
 work_week_hourly <- subset(work_hourly, Weekend == FALSE)
 school_weekend_hourly <- subset(school_hourly, Weekend)
@@ -99,17 +97,11 @@ school_rhythm <- aggregate(Steps ~ Hour, school_week_hourly, mean)
 work_weekend_rhythm <- aggregate(Steps ~ Hour, work_weekend_hourly, mean)
 school_weekend_rhythm <- aggregate(Steps ~ Hour, school_weekend_hourly, mean)
 
-g3 <- ggplot(data=school_rhythm, aes(x=Hour, y=Steps)) + geom_area(aes(group=1), fill="red", color="#333333",alpha=0.3)
-g3 <- g3 + geom_area(aes(group=1), data = work_rhythm, fill = "blue", color="#333333", alpha=0.3)
+g3 <- ggplot(data=school_rhythm, aes(x=Hour, y=Steps)) + geom_area(aes(group=1, fill="School"), color="#333333",alpha=0.3)
+g3 <- g3 + geom_area(aes(group=1, fill="Work"), data = work_rhythm, color="#333333", alpha=0.3)
 g3 <- g3 + ggtitle("Daily rhythms")
-g3 <- g3 + theme_economist(base_size=15)
-g3 <- g3 + xlab("Hour of the day") + ylab("Steps per hour")
+g3 <- g3 + xlab("\nHour of day") + ylab("Steps/hour\n")
+g3 <- g3 + theme_fivethirtyeight(base_size=15) + theme(axis.title=element_text()) + theme(axis.title.y=element_text(angle = 90))
+g3 <- g3 + scale_fill_manual("", breaks=c("School", "Work"), values=c("red", "#6ec7ff")) + theme(legend.title=element_blank())
 g3
-
-
-ggplot(data=work_rhythm, aes(x=Hour, y=Steps)) + geom_bar(stat="identity") + ggtitle("Work weekday rhythm")
-
-ggplot(data=school_weekend_rhythm, aes(x=Hour, y=Steps)) + geom_bar(stat="identity")
-ggplot(data=work_weekend_rhythm, aes(x=Hour, y=Steps)) + geom_bar(stat="identity")
-
 
